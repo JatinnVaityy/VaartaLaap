@@ -25,7 +25,7 @@ export default function Chat() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // ✅ search state
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { username, id, setId, setUsername } = useContext(UserContext);
   const divUnderMessages = useRef();
@@ -61,9 +61,7 @@ export default function Chat() {
       setWsConnected(false);
       scheduleReconnect();
     });
-    socket.addEventListener("error", (err) => {
-      console.error("WebSocket error", err);
-    });
+    socket.addEventListener("error", (err) => console.error("WebSocket error", err));
   }
 
   function scheduleReconnect() {
@@ -104,8 +102,7 @@ export default function Chat() {
   }
 
   const logout = () => {
-    axios
-      .post("/logout", {}, { withCredentials: true })
+    axios.post("/logout", {}, { withCredentials: true })
       .then(() => {
         wsRef.current?.close();
         setWsConnected(false);
@@ -175,8 +172,7 @@ export default function Chat() {
   useEffect(() => divUnderMessages.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
 
   useEffect(() => {
-    axios
-      .get("/people", { withCredentials: true })
+    axios.get("/people", { withCredentials: true })
       .then((res) => {
         const offline = {};
         res.data
@@ -189,8 +185,7 @@ export default function Chat() {
 
   useEffect(() => {
     if (!selectedUserId) return setMessages([]);
-    axios
-      .get("/messages/" + selectedUserId, { withCredentials: true })
+    axios.get("/messages/" + selectedUserId, { withCredentials: true })
       .then((res) => setMessages(uniqBy(res.data, "_id")))
       .catch(console.error);
   }, [selectedUserId]);
@@ -290,20 +285,19 @@ export default function Chat() {
                     : "bg-white text-gray-800 rounded-bl-none"
                 }`}
               >
-                {typeof msg.text === "string" && msg.text.startsWith("data:audio/") ? (
-                  <audio controls className="mt-2 max-w-xs" src={msg.text} />
-                ) : (
-                  <span style={{ whiteSpace: "pre-wrap" }}>{msg.text}</span>
-                )}
-                {msg.file && (
+                {msg.file?.startsWith("https://") ? (
                   <a
-                    href={(axios.defaults.baseURL || "") + "/uploads/" + (msg.file.name || msg.file)}
+                    href={msg.file}
                     target="_blank"
                     rel="noreferrer"
                     className="block mt-2 underline text-blue-600 text-sm truncate"
                   >
-                    {msg.file.name || msg.file}
+                    {msg.file.split("/").pop()}
                   </a>
+                ) : typeof msg.text === "string" && msg.text.startsWith("data:audio/") ? (
+                  <audio controls className="mt-2 max-w-xs" src={msg.text} />
+                ) : (
+                  <span style={{ whiteSpace: "pre-wrap" }}>{msg.text}</span>
                 )}
               </div>
             </div>
