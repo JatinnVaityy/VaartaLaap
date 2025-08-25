@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
   credentials: true,
-  origin: "https://vaartalaap.vercel.app",
+  origin: "vaartalaap-fa6f9qd9l-jatinnvaityy.vercel.app",
 }));
 
 // -------------------- 🔐 Helper ----------------------
