@@ -12,9 +12,6 @@ import { FiMenu, FiX, FiPaperclip, FiSend, FiSmile, FiMic, FiLogOut } from "reac
 export default function Chat() {
   const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef(null);
-  const reconnectTimerRef = useRef(null);
-  const reconnectAttemptsRef = useRef(0);
-  const outgoingQueueRef = useRef([]);
 
   const [onlinePeople, setOnlinePeople] = useState({});
   const [offlinePeople, setOfflinePeople] = useState({});
@@ -30,53 +27,22 @@ export default function Chat() {
   const { username, id, setId, setUsername } = useContext(UserContext);
   const divUnderMessages = useRef();
 
-  // WebSocket connection
   useEffect(() => {
-    connectWebSocket();
-    return () => {
-      clearTimeout(reconnectTimerRef.current);
-      wsRef.current?.close();
-    };
-    // eslint-disable-next-line
-  }, []);
-
-  function connectWebSocket() {
-    if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) return;
     const url =
       (window.location.protocol === "https:" ? "wss" : "ws") +
       "://" +
-      window.location.hostname +
-      ":4040";
+      window.location.hostname;
     const socket = new WebSocket(url);
     wsRef.current = socket;
 
-    socket.addEventListener("open", () => {
-      setWsConnected(true);
-      reconnectAttemptsRef.current = 0;
-      flushQueue();
-    });
-
+    socket.addEventListener("open", () => setWsConnected(true));
     socket.addEventListener("message", handleMessage);
-    socket.addEventListener("close", () => {
-      setWsConnected(false);
-      scheduleReconnect();
-    });
+    socket.addEventListener("close", () => setWsConnected(false));
     socket.addEventListener("error", (err) => console.error("WebSocket error", err));
-  }
 
-  function scheduleReconnect() {
-    reconnectAttemptsRef.current += 1;
-    const timeout = Math.min(30000, 1000 * Math.pow(1.5, reconnectAttemptsRef.current));
-    reconnectTimerRef.current = setTimeout(connectWebSocket, timeout);
-  }
-
-  function flushQueue() {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    while (outgoingQueueRef.current.length > 0) {
-      const msg = outgoingQueueRef.current.shift();
-      wsRef.current.send(JSON.stringify(msg));
-    }
-  }
+    return () => wsRef.current?.close();
+    // eslint-disable-next-line
+  }, []);
 
   function handleMessage(ev) {
     try {
@@ -84,7 +50,7 @@ export default function Chat() {
 
       if (Array.isArray(data.online)) {
         const online = {};
-        data.online.forEach(({ userId, username }) => (online[userId] = { username }));
+        data.online.forEach(({ userId, username }) => (online[userId] = { username })); 
         setOnlinePeople(online);
         return;
       }
@@ -122,12 +88,10 @@ export default function Chat() {
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(payload));
+      setNewMessageText("");
     } else {
-      outgoingQueueRef.current.push(payload);
-      connectWebSocket();
-      toast("Message queued...", { icon: "⏳" });
+      toast.error("WebSocket not connected");
     }
-    setNewMessageText("");
   };
 
   const sendFile = (ev) => {
