@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
   credentials: true,
-  origin: process.env.CLIENT_URL,
+  origin: "https://vaartalaap.vercel.app",
 }));
 
 // -------------------- 🔐 Helper ----------------------
@@ -162,40 +162,11 @@ app.get('/people', async (req,res) => {
   res.json(users);
 });
 
-app.post("/translate", async (req, res) => {
-  try {
-    const { text, target } = req.body;
-
-    if (!text || !target) {
-      return res.status(400).json({ error: "Text and target language required" });
-    }
-
-    const response = await axios.post(
-      "https://libretranslate.de/translate",
-      {
-        q: text,
-        source: "auto",
-        target,
-        format: "text",
-      },
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    res.json({ translatedText: response.data.translatedText });
-  } catch (err) {
-    console.error(err.response?.data || err);
-    res.status(500).json({ error: "Translation failed" });
-  }
-});
-
 // -------------------- ✅ WebSocket ----------------------
 
-const server = app.listen(4040, () => {
-  console.log("🚀 Server running on port 4040");
+const PORT = process.env.PORT || 4040; 
+const server = app.listen(PORT, () => {
+  console.log("🚀 Server running on port " + PORT);
 });
 
 const wss = new ws.WebSocketServer({server});
